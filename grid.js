@@ -734,7 +734,7 @@ export function evaluateMissionRun(simulationResult) {
   const touchWeight = itemWeight * 0.5;
   const actionWeight = itemWeight * 0.5;
 
-  const vowelScore = totalVowels > 0 ? (visitedVowelsCount / totalVowels) * itemWeight : itemWeight;
+  const vowelScore = visitedVowelsCount * itemWeight;
 
   // 6. Aggregate Final Score
   const rawScore = obstacleScore + vowelScore;
