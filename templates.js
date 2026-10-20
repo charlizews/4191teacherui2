@@ -66,7 +66,7 @@ export const TEMPLATES = [
     start: 'J18', dir: 0,
     vowels: { O: 'J8' },
     include: ['while'],
-    solution: 'make "vowel "blank\nwhile vowel == "NONE" [ fd 1 ]',
+    solution: 'make "vowel "blank\nwhile :vowel = "blank [ fd 1 ]',
     robotOnly: false
   },
   {
@@ -75,7 +75,7 @@ export const TEMPLATES = [
     start: 'J18', dir: 0, dest: 'F14',
     obstacles: ['J13'], vowels: { A: 'J14' },
     include: ['ifelse'],
-    solution: 'make "vowel "blank\nmake "a "a\nfd 4\nifelse :vowel = :a [ lt 90 fd 4 ] [ rt 90 fd 4 ]',
+    solution: 'make "vowel "blank\nmake "checkpoint "a\nfd 4\nifelse :vowel = :checkpoint [ lt 90 fd 4 ] [ rt 90 fd 4 ]',
     robotOnly: false
   },
   {
@@ -84,7 +84,7 @@ export const TEMPLATES = [
     start: 'J18', dir: 0, dest: 'M10',
     vowels: { E: 'J10' },
     include: ['while', 'ifelse'],
-    solution: 'make vowel "NONE"\nwhile vowel == "NONE" [ fd 1 ]\nifelse vowel == "E" [ rt 90 fd 3 ] [ lt 90 fd 3 ]',
+    solution: 'make "vowel "blank\nwhile :vowel = "blank [ fd 1 ]\nifelse :vowel = :e [ rt 90 fd 3 ] [ lt 90 fd 3 ]',
     robotOnly: false
   }
 ];
