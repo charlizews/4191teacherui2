@@ -1,7 +1,6 @@
 // main.js
-
 import { connectToRobot, registerDataHandler } from './bluetooth.js';
-import { initGrid, executeLogoCommands, clearTrail } from './grid.js';
+import { initGrid, executeLogoCommands, clearTrail, placeItem } from './grid.js'; // Added placeItem import
 import { openLastGradeModal, loadTemplate } from './grid.js';
 import { TEMPLATES } from './templates.js';
 
@@ -25,8 +24,28 @@ document.addEventListener('DOMContentLoaded', () => {
   const gradeModal = document.getElementById('gradeModal');
   const viewGradeBtn = document.getElementById('viewGradeBtn');
 
+  // Elements for manual cell placement
+  const placeItemBtn = document.getElementById('placeBtn');
+  const coordInput = document.getElementById('coordInput');
+  const itemSelect = document.getElementById('itemTypeSelect');
+
   // Modal Handlers
   const hideModal = () => { if (gradeModal) gradeModal.style.display = 'none'; };
+
+  if (placeItemBtn) {
+    placeItemBtn.addEventListener('click', () => {
+      const coord = coordInput ? coordInput.value.trim().toUpperCase() : '';
+      const selectedType = itemSelect ? itemSelect.value : '';
+
+      if (coord) {
+        const success = placeItem(coord, selectedType);
+        if (!success) {
+          console.warn("Placement rejected due to constraint violation.");
+          return;
+        }
+      }
+    });
+  }
 
   if (closeModalBtn) closeModalBtn.addEventListener('click', hideModal);
   if (modalOkBtn) modalOkBtn.addEventListener('click', hideModal);
