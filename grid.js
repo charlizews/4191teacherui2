@@ -437,43 +437,107 @@ function parseAndPlace() {
   updateUI();
 }
 
+function isVowelNearby(targetKey) {
+  const VOWELS = ['a', 'e', 'i', 'o', 'u'];
+  const COLS_ARR = COLS || ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T'];
+  
+  const targetCol = targetKey[0].toUpperCase();
+  const targetRow = parseInt(targetKey.slice(1), 10);
+  
+  const targetColIdx = COLS_ARR.indexOf(targetCol);
+  const targetRowIdx = targetRow - 1;
+
+  // Scan 3x3 box surrounding target position (dx, dy from -1 to 1)
+  for (let dx = -1; dx <= 1; dx++) {
+    for (let dy = -1; dy <= 1; dy++) {
+      if (dx === 0 && dy === 0) continue; // Skip target cell itself
+
+      const neighborColIdx = targetColIdx + dx;
+      const neighborRowIdx = targetRowIdx + dy;
+
+      if (neighborColIdx >= 0 && neighborColIdx < COLS_ARR.length && neighborRowIdx >= 0 && neighborRowIdx < 20) {
+        const neighborKey = `${COLS_ARR[neighborColIdx]}${neighborRowIdx + 1}`;
+        const neighborItem = boardState[neighborKey];
+
+        if (neighborItem && VOWELS.includes(String(neighborItem.type).toLowerCase())) {
+          return true; // Found an adjacent or diagonal vowel!
+        }
+      }
+    }
+  }
+  return false;
+}
+
 // Place one item (start/dest/obstacle/vowel) at a key like "B14"
-function placeItem(key, selectedType) {
+export function placeItem(key, selectedType, isTemplateLoad = false) {
   const col = key[0];
   const row = key.slice(1);
+  const normalizedType = String(selectedType).toLowerCase();
+  const VOWELS = ['a', 'e', 'i', 'o', 'u'];
 
+  // 1. Proximity Check for Vowels
+  if (VOWELS.includes(normalizedType)) {
+    // Temporarily remove target key and existing same-vowel key during scan
+    const currentAtKey = boardState[key];
+    delete boardState[key];
+
+    const existingSameVowelKey = Object.keys(boardState).find(
+      k => String(boardState[k].type).toLowerCase() === normalizedType
+    );
+    let tempSavedSameVowel = null;
+    if (existingSameVowelKey) {
+      tempSavedSameVowel = boardState[existingSameVowelKey];
+      delete boardState[existingSameVowelKey];
+    }
+
+    const proximityViolation = isVowelNearby(key);
+
+    // Restore state and stop if blocked
+    if (proximityViolation && !isTemplateLoad) {
+      if (currentAtKey) boardState[key] = currentAtKey;
+      if (existingSameVowelKey) boardState[existingSameVowelKey] = tempSavedSameVowel;
+      
+      alert(`⚠️ Cannot place vowel at ${key}! Vowels must leave at least a 1-block gap (including diagonals) from each other.`);
+      return false; // STOP EXECUTION HERE
+    }
+
+    // Restore temporary state if valid so single-instance cleanup runs normally
+    if (existingSameVowelKey) boardState[existingSameVowelKey] = tempSavedSameVowel;
+    if (currentAtKey) boardState[key] = currentAtKey;
+  }
+
+  // 2. Clear existing coordinate if cell is occupied
   if (boardState[key]) {
     removeCoordinate(key);
   }
 
-  // Enforce Single-Instance placement rules
+  // 3. Enforce Single-Instance placement rules
   if (selectedType === 'start' && startCoord) removeCoordinate(startCoord);
   if (selectedType === 'dest' && destCoord) removeCoordinate(destCoord);
 
-  if (['a', 'e', 'i', 'o', 'u'].includes(selectedType)) {
+  if (VOWELS.includes(normalizedType)) {
     const existingVowelKey = Object.keys(boardState).find(
-      k => boardState[k].type === selectedType
+      k => String(boardState[k].type).toLowerCase() === normalizedType
     );
     if (existingVowelKey) removeCoordinate(existingVowelKey);
   }
 
-  // Get Visual Config
+  // 4. Get Visual Config & Render
   const config = getItemConfig(selectedType);
-
-  // Render on Grid DOM Cell
   const cell = container.querySelector(`[data-col="${col}"][data-row="${row}"]`);
   if (cell) {
     cell.innerText = config.symbol.toLowerCase();
     cell.className = `grid-cell ${config.className}`;
-    boardState[key] = { type: selectedType.toLowerCase(), symbol: config.symbol.toLowerCase() };
+    boardState[key] = { type: normalizedType, symbol: config.symbol.toLowerCase() };
   }
 
-  // Update Core State Trackers
   if (selectedType === 'start') {
     startCoord = key;
   } else if (selectedType === 'dest') {
     destCoord = key;
   }
+
+  return true;
 }
 
 // Load a preset board from templates.js, replacing the current board.
